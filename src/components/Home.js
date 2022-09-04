@@ -1,9 +1,23 @@
-import React, { useState } from "react";
-import './App.css'
+import React, { useState, useEffect } from "react";
+import "./Home.css"
+
+const TODOS_KEY = 'my-todos';
 
 const Home = () => {
     const [note, setNote] = useState('');
     const [todos, setTodos] = useState([]);
+
+    // sync local storage
+    useEffect(() => {
+        if (localStorage.getItem(TODOS_KEY)) {
+            const savedTodos = JSON.parse(
+                localStorage.getItem(TODOS_KEY)
+            );
+            setTodos(savedTodos);
+        } else {
+            localStorage.setItem(TODOS_KEY, JSON.stringify([]));
+        }
+    }, []);
 
     const [editedTodoId, setEditedTodoId] = useState(null);
     const [newNote, setNewNote] = useState('');
@@ -16,18 +30,22 @@ const Home = () => {
         };
 
         const updatedTodos = [...todos, newTodo];
-
         setTodos(updatedTodos);
         setNote('');
+
+        // update local storage
+        localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos));
     } 
     
     const deleteTodo = (todoId) => {
         const updatedTodos = todos.filter(todo => todo.id !== todoId);
         setTodos(updatedTodos);
+
+        // update local storage
+        localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos));
     }
 
-
-    const completedTodo = (editedTodo) => {
+    const toggleTodo = (editedTodo) => {
         setTodos((prevTodos)=> {
             return prevTodos.map(todo => {
                 if (todo.id === editedTodo.id){
@@ -43,7 +61,6 @@ const Home = () => {
         setEditedTodoId(todo.id)
     }
 
-
     const saveTodo = (todo) => {
         setTodos((prevTodos)=> {
             return prevTodos.map(el => {
@@ -55,44 +72,96 @@ const Home = () => {
         });
         setEditedTodoId('')
         setNewNote('')
-    }   
-
+    }
 
     return (
-        <div style={{textAlign:"center"}}>
-            <input 
-                type="text"
-                value={note}
-                onChange={event => setNote(event.target.value)}
-                onKeyDown={event => (event.key === 'Enter') ? addTodo() : null}
-            />
+        <div className="todoApp">
+            {/* TODO FORM */}
+            <div className="todoForm">
+                <input
+                    className="todoFormInput"
+                    type="text"
+                    value={note}
+                    onChange={event => setNote(event.target.value)}
+                    onKeyDown={event => (event.key === 'Enter') ? addTodo() : null}
+                />
 
-            <button onClick={() => addTodo()}>add</button>
-            
-            <ul>
+                <button
+                    className="todoFormButton"
+                    onClick={() => addTodo()}
+                >
+                    add
+                </button>
+            </div>
+
+            {/* TODO LIST */}
+            <div className="todoList">
                 {todos.map((todo) =>
-                    <li key={todo.id}>
-                        {editedTodoId === todo.id && <input type="text" value={newNote} onChange={event => setNewNote(event.target.value)}/>}
-                        {editedTodoId !== todo.id && <span className="elems" style={{ textDecoration: todo.completed ? 'line-through' : 'none'  }} onClick={()=>completedTodo(todo)}>{todo.title}</span>}
+                    <div key={todo.id} className={
+                        "todoItem"
+                        + (todo.completed ? " completed" : "")
+                        + (editedTodoId === todo.id ? " edited" : "")
+                    }>
+                        <div className="todoItemText">
+                            {editedTodoId !== todo.id && (
+                                <span
+                                    style={{ textDecoration: todo.completed ? 'line-through' : 'none'  }}
+                                    onClick={()=>toggleTodo(todo)}
+                                >
+                                    {todo.title}
+                                </span>
+                            )}
 
-                        {editedTodoId !== todo.id && <button onClick={()=>changeTodo(todo)}>
-                            Редактировать
-                        </button>}
+                            {editedTodoId === todo.id && (
+                                <input
+                                    type="text"
+                                    value={newNote}
+                                    onChange={event => setNewNote(event.target.value)}
+                                    onKeyDown={event => (event.key === 'Enter') ? saveTodo(todo) : null}
+                                />
+                            )}
+                        </div>
 
-                        {editedTodoId === todo.id && <button onClick={()=>saveTodo(todo)}>
-                            Сохранить
-                        </button> }
-                        {editedTodoId === todo.id && <button onClick={()=>setEditedTodoId(!editedTodoId)}>
-                            Отменить
-                        </button> }
+                        <div className="todoItemActions">
+                            {editedTodoId !== todo.id && (
+                                <button
+                                    className="actionButton"
+                                    onClick={()=>changeTodo(todo)}
+                                >
+                                    edit
+                                </button>
+                            )}
 
+                            {editedTodoId !== todo.id && (
+                                <button
+                                    className="actionButton"
+                                    onClick={()=>deleteTodo(todo.id)}
+                                >
+                                    delete
+                                </button>
+                            )}
 
-                        <button onClick={()=>deleteTodo(todo.id)}>
-                            Удалить
-                        </button>
-                    </li>
+                            {editedTodoId === todo.id && (
+                                <button
+                                    className="actionButton"
+                                    onClick={()=>saveTodo(todo)}
+                                >
+                                    save                            
+                                </button>
+                            )}
+
+                            {editedTodoId === todo.id && (
+                                <button
+                                    className="actionButton"
+                                    onClick={()=>setEditedTodoId(!editedTodoId)}
+                                >
+                                    cancel
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 )} 
-            </ul>
+            </div>
         </div>
     )
 }
