@@ -9,15 +9,22 @@ const Home = () => {
 
     // sync local storage
     useEffect(() => {
-        if (localStorage.getItem(TODOS_KEY)) {
-            const savedTodos = JSON.parse(
-                localStorage.getItem(TODOS_KEY)
-            );
+        const savedTodos = JSON.parse(
+            localStorage.getItem(TODOS_KEY)
+        );
+
+        if (savedTodos?.length) {
             setTodos(savedTodos);
-        } else {
-            localStorage.setItem(TODOS_KEY, JSON.stringify([]));
         }
     }, []);
+
+    // save todo list
+    useEffect(() => {
+        localStorage.setItem(
+            TODOS_KEY,
+            JSON.stringify(todos),
+        );
+    }, [todos]);
 
     const [editedTodoId, setEditedTodoId] = useState(null);
     const [newNote, setNewNote] = useState('');
@@ -32,17 +39,11 @@ const Home = () => {
         const updatedTodos = [...todos, newTodo];
         setTodos(updatedTodos);
         setNote('');
-
-        // update local storage
-        localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos));
     } 
     
     const deleteTodo = (todoId) => {
         const updatedTodos = todos.filter(todo => todo.id !== todoId);
         setTodos(updatedTodos);
-
-        // update local storage
-        localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos));
     }
 
     const toggleTodo = (editedTodo) => {
